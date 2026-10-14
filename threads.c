@@ -6,7 +6,7 @@ typedef struct {
     int end;
 } ThreadData;
 
-int total_sum = 0;
+int total_primes = 0;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void* worker(void *arg) {
@@ -19,9 +19,9 @@ void* worker(void *arg) {
     for (int i = start; i <= end; i++) {
         sum += i;
     }
-    printf("Sum of numbers from %d to %d is: %d\n", start, end, sum);
+    printf("Total number of primes from %d to %d is: %d\n", start, end, sum);
     pthread_mutex_lock(&mutex);
-    total_sum += sum;
+    total_primes += sum;
     pthread_mutex_unlock(&mutex);
     return NULL;
 }
@@ -40,8 +40,8 @@ int main() {
     pthread_join(thread1, NULL);
     pthread_join(thread2, NULL);
     pthread_mutex_destroy(&mutex);
-    
-    printf("Total sum from 1 to 100 is: %d\n", total_sum);
+
+    printf("Total primes from 1 to 100 is: %d\n", total_primes);
     printf("Program finished execution.\n");
-    return 0;
+    return 0;  
 }
