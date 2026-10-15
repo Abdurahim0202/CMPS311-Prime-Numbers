@@ -7,25 +7,25 @@
 #include <errno.h>
 
 typedef struct {
-    int start;
-    int end;
+    long long start;
+    long long end;
 } ThreadData;
 
-int total_primes = 0;
+long long total_primes = 0;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void* worker(void *arg) {
     ThreadData *data = (ThreadData*)arg;
-    int start = data->start;
-    int end = data->end;
-    int count = 0;
+    long long start = data->start;
+    long long end = data->end;
+    long long count = 0;
 
-    for (int i = start; i <= end; i++) {
-        if (isPrime(i)) {
+    for (long long i = start; i <= end; i++) {
+        if (isPrime((int)i)) {
             count++;
         }
     }
-    printf("Total number of primes from %d to %d is: %d\n", start, end, count);
+    printf("Total number of primes from %lld to %lld is: %lld\n", start, end, count);
     pthread_mutex_lock(&mutex);
     total_primes += count;
     pthread_mutex_unlock(&mutex);
@@ -69,14 +69,18 @@ int main(int argc, char *argv[]) {
         printf("Invalid range or number of threads.\n");
         return 1;
     }
+    if (numThreads > 64) {
+        printf("Error: Maximum number of threads is 64.\n");
+        return 1;
+    }
     if (numThreads > totalNumbers) {
         printf("Error: Number of threads cannot exceed range size.\n");
         return 1;
     }
 
-    int chunkSize = totalNumbers / numThreads;
-    int remainder = totalNumbers % numThreads;
-    int currentStart = start;
+    long long chunkSize = totalNumbers / numThreads;
+    long long remainder = totalNumbers % numThreads;
+    long long currentStart = start;
 
     ThreadData data[numThreads];
     pthread_t threads[numThreads];
@@ -84,6 +88,8 @@ int main(int argc, char *argv[]) {
     // Start measuring time
     clock_gettime(CLOCK_MONOTONIC, &startTime);
 
+    int createdThreads = 0;
+    int failedThreads = 0;
     for (int i = 0; i < numThreads; i++) {
         data[i].start = currentStart;
         data[i].end = currentStart + chunkSize - 1;
@@ -92,11 +98,25 @@ int main(int argc, char *argv[]) {
             remainder--;
         }
         currentStart = data[i].end + 1;
-        pthread_create(&threads[i], NULL, worker, &data[i]);
+        int status = pthread_create(&threads[i], NULL, worker, &data[i]);
+
+        if (status != 0) {
+            fprintf(stderr, "Failed to create thread %d (error %d)\n", i, status);
+            failedThreads++;
+            break;
+        } else {
+            createdThreads++;
+        }
     }
 
-    for (int i = 0; i < numThreads; i++) {
+    for (int i = 0; i < createdThreads; i++) {
         pthread_join(threads[i], NULL);
+    }
+
+    if (failedThreads > 0) {
+        fprintf(stderr, "Failed to create %d threads. Exiting.\n", failedThreads);
+        pthread_mutex_destroy(&mutex);
+        return 1;
     }
     
 
@@ -108,7 +128,7 @@ int main(int argc, char *argv[]) {
     (endTime.tv_sec - startTime.tv_sec) +
     (endTime.tv_nsec - startTime.tv_nsec) / 1e9;
 
-    printf("Total primes from %d to %d is: %d\n", start, end, total_primes);
+    printf("Total primes from %d to %d is: %lld\n", start, end, total_primes);
     printf("Elapsed time: %.6f seconds\n", elapsed);
 
 
