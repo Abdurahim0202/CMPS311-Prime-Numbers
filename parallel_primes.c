@@ -26,12 +26,15 @@ void* worker(void *arg) {
         }
     }
     printf("Total number of primes from %lld to %lld is: %lld\n", start, end, count);
+    // / Assignment: Protect the shared prime count from race conditions.
+    // Critical section: safely update the shared prime count.
     pthread_mutex_lock(&mutex);
     total_primes += count;
     pthread_mutex_unlock(&mutex);
     return NULL;
 }
 
+// Convert input strings to integers and validate them before use.
 int parseInteger(const char *text, int *result) {
     char *endptr;
 
@@ -47,6 +50,7 @@ int parseInteger(const char *text, int *result) {
     return 1;
 }
 
+// Validate the three command-line inputs: start, end, and thread count.
 int main(int argc, char *argv[]) {
     if (argc != 4) {
         printf("Usage: %s <start> <end> <threads>\n", argv[0]);
@@ -61,6 +65,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    // Measure sequential prime search time for comparison with parallel execution.
     struct timespec seqStart, seqEnd;
     clock_gettime(CLOCK_MONOTONIC, &seqStart);
 
@@ -76,6 +81,7 @@ int main(int argc, char *argv[]) {
     struct timespec startTime, endTime;
     long long totalNumbers = (long long)end - start + 1;
 
+    // Validate range and thread count (maximum 64 threads, no empty workloads).
     if(start > end || numThreads <= 0) {
         printf("Invalid range or number of threads.\n");
         return 1;
@@ -89,6 +95,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    // // Divide the range among threads and distribute any leftover numbers.
     long long chunkSize = totalNumbers / numThreads;
     long long remainder = totalNumbers % numThreads;
     long long currentStart = start;
@@ -99,6 +106,7 @@ int main(int argc, char *argv[]) {
     // Start measuring time
     clock_gettime(CLOCK_MONOTONIC, &startTime);
 
+    // Assign each thread a subrange and start the worker function.
     int createdThreads = 0;
     int failedThreads = 0;
     for (int i = 0; i < numThreads; i++) {
@@ -120,7 +128,9 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    // Wait for all worker threads to finish before displaying results.
     for (int i = 0; i < createdThreads; i++) {
+        // Assignment: Wait for all worker threads to finish before combining results.
         pthread_join(threads[i], NULL);
     }
 
