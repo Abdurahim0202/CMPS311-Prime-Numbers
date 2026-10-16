@@ -13,3 +13,15 @@ bool isPrime(int num){
     }
     return true; 
 }
+
+long long countPrimes(int start, int end) {
+    long long count = 0;
+
+    for (long long i = start; i <= end; i++) {
+        if (isPrime((int)i)) {
+            count++;
+        }
+    }
+
+    return count;
+}

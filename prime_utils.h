@@ -4,5 +4,6 @@
 #include <stdbool.h>
 
 bool isPrime(int num);
+long long countPrimes(int start, int end);
 
 #endif

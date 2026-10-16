@@ -60,7 +60,18 @@ int main(int argc, char *argv[]) {
         printf("Error: Invalid integer input.\n");
         return 1;
     }
-    
+
+    struct timespec seqStart, seqEnd;
+    clock_gettime(CLOCK_MONOTONIC, &seqStart);
+
+    long long sequentialCount = countPrimes(start, end);
+
+    clock_gettime(CLOCK_MONOTONIC, &seqEnd);
+
+    double sequentialTime =
+        (seqEnd.tv_sec - seqStart.tv_sec) +
+        (seqEnd.tv_nsec - seqStart.tv_nsec) / 1e9;
+
     // Start measuring time
     struct timespec startTime, endTime;
     long long totalNumbers = (long long)end - start + 1;
@@ -128,8 +139,13 @@ int main(int argc, char *argv[]) {
     (endTime.tv_sec - startTime.tv_sec) +
     (endTime.tv_nsec - startTime.tv_nsec) / 1e9;
 
-    printf("Total primes from %d to %d is: %lld\n", start, end, total_primes);
-    printf("Elapsed time: %.6f seconds\n", elapsed);
+    printf("\nSequential primes: %lld\n", sequentialCount);
+    printf("Sequential time: %.6f seconds\n", sequentialTime);
+
+    printf("\nParallel primes: %lld\n", total_primes);
+    printf("Parallel time: %.6f seconds\n", elapsed);
+
+    printf("\nSpeedup: %.2fx\n", sequentialTime / elapsed);
 
 
     return 0;
