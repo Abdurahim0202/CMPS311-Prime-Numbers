@@ -6,6 +6,7 @@
 #include <limits.h>
 #include <errno.h>
 
+// Structure to hold the start and end range for each thread's workload.
 typedef struct {
     long long start;
     long long end;
@@ -14,6 +15,7 @@ typedef struct {
 long long total_primes = 0;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
+// Worker function for each thread to count primes in its assigned range.
 void* worker(void *arg) {
     ThreadData *data = (ThreadData*)arg;
     long long start = data->start;
@@ -25,7 +27,8 @@ void* worker(void *arg) {
             count++;
         }
     }
-    printf("Total number of primes from %lld to %lld is: %lld\n", start, end, count);
+    //printf("Total number of primes from %lld to %lld is: %lld\n", start, end, count);
+
     // / Assignment: Protect the shared prime count from race conditions.
     // Critical section: safely update the shared prime count.
     pthread_mutex_lock(&mutex);
@@ -56,10 +59,10 @@ int main(int argc, char *argv[]) {
         printf("Usage: %s <start> <end> <threads>\n", argv[0]);
         return 1;
     }
-    
+
     int start, end, numThreads;
-    if (!parseInteger(argv[1], &start) || 
-        !parseInteger(argv[2], &end) || 
+    if (!parseInteger(argv[1], &start) ||
+        !parseInteger(argv[2], &end) ||
         !parseInteger(argv[3], &numThreads)) {
         printf("Error: Invalid integer input.\n");
         return 1;
@@ -82,7 +85,7 @@ int main(int argc, char *argv[]) {
     long long totalNumbers = (long long)end - start + 1;
 
     // Validate range and thread count (maximum 64 threads, no empty workloads).
-    if(start > end || numThreads <= 0) {
+    if (start > end || numThreads <= 0) {
         printf("Invalid range or number of threads.\n");
         return 1;
     }
@@ -139,15 +142,13 @@ int main(int argc, char *argv[]) {
         pthread_mutex_destroy(&mutex);
         return 1;
     }
-    
-
     // End measuring time
     clock_gettime(CLOCK_MONOTONIC, &endTime);
     pthread_mutex_destroy(&mutex);
-    
+
     double elapsed =
-    (endTime.tv_sec - startTime.tv_sec) +
-    (endTime.tv_nsec - startTime.tv_nsec) / 1e9;
+        (endTime.tv_sec - startTime.tv_sec) +
+        (endTime.tv_nsec - startTime.tv_nsec) / 1e9;
 
     printf("\nSequential primes: %lld\n", sequentialCount);
     printf("Sequential time: %.6f seconds\n", sequentialTime);
@@ -156,7 +157,6 @@ int main(int argc, char *argv[]) {
     printf("Parallel time: %.6f seconds\n", elapsed);
 
     printf("\nSpeedup: %.2fx\n", sequentialTime / elapsed);
-
 
     return 0;
 }
